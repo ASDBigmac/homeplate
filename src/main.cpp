@@ -125,6 +125,8 @@ void setup()
     // if the selected activity is missing required settings,
     // or if the wake button is held during boot
     bool forcePortal = !isConfigured();
+    if (forcePortal)
+        Serial.println("[SETUP] Device not configured, forcing config portal");
     if (consumeForcePortalFlag())
     {
         Serial.println("[SETUP] force_portal flag set via MQTT, forcing config portal");
@@ -147,12 +149,10 @@ void setup()
             (act == Trmnl && strlen(plateCfg.trmnlId) == 0) ||
             (act == GuestWifi && strlen(plateCfg.qrWifiName) == 0))
         {
-            Serial.println("[SETUP] Activity missing required settings, forcing config portal");
+            Serial.printf("[SETUP] Default activity '%s' missing required settings, forcing config portal\n", plateCfg.defaultActivityStr);
             forcePortal = true;
         }
     }
-    if (forcePortal)
-        Serial.println("[SETUP] Device not configured, forcing config portal");
     Serial.println("[SETUP] starting WiFiManager");
     if (!startWiFiManager(forcePortal))
     {
