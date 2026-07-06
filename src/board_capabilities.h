@@ -15,7 +15,8 @@
     && !defined(ARDUINO_INKPLATE6PLUS) \
     && !defined(ARDUINO_INKPLATE6PLUSV2) \
     && !defined(ARDUINO_INKPLATE6FLICK) \
-    && !defined(ARDUINO_INKPLATECOLOR)
+    && !defined(ARDUINO_INKPLATECOLOR) \
+    && !defined(ARDUINO_INKPLATE13SPECTRA)
 #error "Unsupported board selection, please select a supported Inkplate board."
 #endif
 
@@ -51,6 +52,10 @@
 #define WAKE_BUTTON GPIO_NUM_13
 // GPIO 13 is a regular bidirectional pin with internal pull-up available.
 #define WAKE_BUTTON_MODE INPUT_PULLUP
+#elif defined(ARDUINO_INKPLATE13SPECTRA)
+#define WAKE_BUTTON GPIO_NUM_18
+// GPIO 18 is a regular bidirectional pin with internal pull-up available.
+#define WAKE_BUTTON_MODE INPUT_PULLUP
 #endif
 
 // ==== Panel capability flags ====
@@ -60,6 +65,9 @@
 // new boards (color or B&W) only need to be added to the lists above.
 #if defined(ARDUINO_INKPLATECOLOR)
 #define INKPLATE_IS_COLOR
+#elif defined(ARDUINO_INKPLATE13SPECTRA)
+#define INKPLATE_IS_COLOR
+
 #else
 #define INKPLATE_HAS_PARTIAL_UPDATE
 #define INKPLATE_HAS_DISPLAY_MODES
