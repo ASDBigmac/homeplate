@@ -29,6 +29,13 @@ extern uint bootCount, activityCount, timeToSleep;
 #define scaleX(px) ((int32_t)(px) * E_INK_WIDTH / REF_WIDTH)
 #define scaleY(px) ((int32_t)(px) * E_INK_HEIGHT / REF_HEIGHT)
 
+// Runtime display dimensions account for any board-default rotation applied by
+// the Inkplate library, such as Inkplate 13 Spectra's landscape orientation.
+inline int16_t hpDisplayWidth() { return display.width(); }
+inline int16_t hpDisplayHeight() { return display.height(); }
+inline int32_t hpScaleX(int32_t px) { return px * hpDisplayWidth() / REF_WIDTH; }
+inline int32_t hpScaleY(int32_t px) { return px * hpDisplayHeight() / REF_HEIGHT; }
+
 // Font roles and tier-specific font includes
 #if defined(ARDUINO_INKPLATE10) || defined(ARDUINO_INKPLATE10V2) \
  || defined(ARDUINO_INKPLATE6PLUS) || defined(ARDUINO_INKPLATE6PLUSV2) \
@@ -318,5 +325,4 @@ private:
 // Sleep
 #define SLEEP_TIMEOUT_SEC 15
 #define MAX_REFRESH_SEC 60*60*24 // 1 day
-
 

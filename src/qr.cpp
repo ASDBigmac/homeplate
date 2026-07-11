@@ -18,12 +18,14 @@ void displayWiFiQR()
     QRCode qrcode;
     uint8_t qrcodeData[qrcode_getBufferSize(version)];
     qrcode_initText(&qrcode, qrcodeData, version, ECC_MEDIUM, buf);
-    uint32_t size = max(scaleY(15), 8);
-    uint32_t padRight = scaleX(100);
-    uint32_t padText = scaleX(100);
+    uint32_t displayWidth = hpDisplayWidth();
+    uint32_t displayHeight = hpDisplayHeight();
+    uint32_t size = max(hpScaleY(15), 8);
+    uint32_t padRight = hpScaleX(100);
+    uint32_t padText = hpScaleX(100);
 
-    uint32_t y = (E_INK_HEIGHT - (qrcode.size * size)) / 2;  // center QR code vertically
-    uint32_t x = (E_INK_WIDTH - (qrcode.size * size) - padRight); // proportional padding on right side
+    uint32_t y = (displayHeight - (qrcode.size * size)) / 2;  // center QR code vertically
+    uint32_t x = (displayWidth - (qrcode.size * size) - padRight); // proportional padding on right side
 
     // serialPrintQR(qrcode);  // for testing
     displayStart();
@@ -38,17 +40,17 @@ void displayWiFiQR()
 
     renderQR(qrcode, x, y, size);
 
-    y = y + scaleY(100); // lower text a little
+    y = y + hpScaleY(100); // lower text a little
     // proportional padding on each side
     uint16_t h = centerTextX("WiFi", padText, x - padText, y);
-    y = y + scaleY(60);
+    y = y + hpScaleY(60);
 
     // do some math to resize the wifi information to fit in the bounding box
-    FontSizing font = findFontSizeFit(plateCfg.qrWifiName, x-padText, (E_INK_HEIGHT-y/2));
+    FontSizing font = findFontSizeFit(plateCfg.qrWifiName, x-padText, (displayHeight-y/2));
     display.setFont(font.font);
-    h = centerTextX(plateCfg.qrWifiName, padText, x - padText, y + h + scaleY(30));
-    font = findFontSizeFit(plateCfg.qrWifiPassword, x - padText, (E_INK_HEIGHT-y));
-    h = centerTextX(plateCfg.qrWifiPassword, padText, x - padText, y + (h + scaleY(30)) * 2);
+    h = centerTextX(plateCfg.qrWifiName, padText, x - padText, y + h + hpScaleY(30));
+    font = findFontSizeFit(plateCfg.qrWifiPassword, x - padText, (displayHeight-y));
+    h = centerTextX(plateCfg.qrWifiPassword, padText, x - padText, y + (h + hpScaleY(30)) * 2);
 
     i2cStart();
     displayStart();
@@ -86,13 +88,15 @@ void displayTextQR(const char *text)
     Serial.printf("[QR] picked version %u (size=%u modules)\n", version, qrcode.size);
 
     // Compute pixel-per-module to fill the shorter screen axis with padding.
-    uint32_t pad   = scaleY(60);
-    uint32_t avail = (E_INK_WIDTH < E_INK_HEIGHT ? E_INK_WIDTH : E_INK_HEIGHT) - 2 * pad;
+    uint32_t displayWidth = hpDisplayWidth();
+    uint32_t displayHeight = hpDisplayHeight();
+    uint32_t pad   = hpScaleY(60);
+    uint32_t avail = (displayWidth < displayHeight ? displayWidth : displayHeight) - 2 * pad;
     uint32_t pixelsPerModule = avail / qrcode.size;
     if (pixelsPerModule < 2) pixelsPerModule = 2; // never go invisibly small
     uint32_t totalPx = qrcode.size * pixelsPerModule;
-    uint32_t x = (E_INK_WIDTH  - totalPx) / 2;
-    uint32_t y = (E_INK_HEIGHT - totalPx) / 2;
+    uint32_t x = (displayWidth  - totalPx) / 2;
+    uint32_t y = (displayHeight - totalPx) / 2;
 
     displayStart();
 #ifdef INKPLATE_HAS_DISPLAY_MODES

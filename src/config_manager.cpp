@@ -646,12 +646,14 @@ void displayConfigModeScreen(const char *apSsid)
     QRCode qrcode;
     uint8_t qrcodeData[qrcode_getBufferSize(version)];
     qrcode_initText(&qrcode, qrcodeData, version, ECC_MEDIUM, qrBuf);
-    uint32_t qrSize = max(scaleY(12), 6);
-    uint32_t qrPadRight = scaleX(100);
-    uint32_t qrTextGap = scaleX(50);
+    uint32_t displayWidth = hpDisplayWidth();
+    uint32_t displayHeight = hpDisplayHeight();
+    uint32_t qrSize = max(hpScaleY(12), 6);
+    uint32_t qrPadRight = hpScaleX(100);
+    uint32_t qrTextGap = hpScaleX(50);
 
-    uint32_t qrY = (E_INK_HEIGHT - (qrcode.size * qrSize)) / 2;
-    uint32_t qrX = E_INK_WIDTH - (qrcode.size * qrSize) - qrPadRight;
+    uint32_t qrY = (displayHeight - (qrcode.size * qrSize)) / 2;
+    uint32_t qrX = displayWidth - (qrcode.size * qrSize) - qrPadRight;
 
     i2cStart();
     displayStart();
@@ -664,22 +666,22 @@ void displayConfigModeScreen(const char *apSsid)
     // Title
     display.setFont(&FONT_TITLE);
     display.setTextSize(1);
-    centerTextX("HomePlate Setup", 0, E_INK_WIDTH, scaleY(100), false);
+    centerTextX("HomePlate Setup", 0, displayWidth, hpScaleY(100), false);
 
     // Instructions
     display.setFont(&FONT_HEADING);
-    centerTextX("Connect to WiFi network:", 0, qrX - qrTextGap, scaleY(250), false);
+    centerTextX("Connect to WiFi network:", 0, qrX - qrTextGap, hpScaleY(250), false);
 
     // AP SSID
     display.setFont(&FONT_HEADING);
-    centerTextX(apSsid, 0, qrX - qrTextGap, scaleY(350), false);
+    centerTextX(apSsid, 0, qrX - qrTextGap, hpScaleY(350), false);
 
     // Additional instructions
     display.setFont(&FONT_BODY);
-    centerTextX("Then open the configuration page", 0, qrX - qrTextGap, scaleY(450), false);
-    centerTextX("to set up your HomePlate.", 0, qrX - qrTextGap, scaleY(480), false);
-    centerTextX("Will sleep after 15 minutes", 0, qrX - qrTextGap, scaleY(540), false);
-    centerTextX("if not configured.", 0, qrX - qrTextGap, scaleY(570), false);
+    centerTextX("Then open the configuration page", 0, qrX - qrTextGap, hpScaleY(450), false);
+    centerTextX("to set up your HomePlate.", 0, qrX - qrTextGap, hpScaleY(480), false);
+    centerTextX("Will sleep after 15 minutes", 0, qrX - qrTextGap, hpScaleY(540), false);
+    centerTextX("if not configured.", 0, qrX - qrTextGap, hpScaleY(570), false);
 
     displayEnd();
 

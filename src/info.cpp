@@ -1,26 +1,36 @@
 #include "homeplate.h"
 #include <esp_chip_info.h>
 
-#if E_INK_WIDTH < 800
-// Small displays (Inkplate 6 COLOR 600px): symmetric layout with tight margins.
-// (32ths) 1 left | 6 label1 | 8 data1 | 2 middle gap | 6 label2 | 8 data2 | 1 right
-#define COL1_NAME_X (1  * (E_INK_WIDTH / 32))
-#define COL1_DATA_X (7  * (E_INK_WIDTH / 32))
-#define COL2_NAME_X (17 * (E_INK_WIDTH / 32))
-#define COL2_DATA_X (23 * (E_INK_WIDTH / 32))
-#else
-#define COL1_NAME_X 1 * (E_INK_WIDTH / 8)
-#define COL1_DATA_X 2 * (E_INK_WIDTH / 8)
-#define COL2_NAME_X 5 * (E_INK_WIDTH / 8)
-#define COL2_DATA_X 6 * (E_INK_WIDTH / 8)
-#endif
-
 #define REDRAW_NETWORK 0
 #define REDRAW_WIFI    1
 #define REDRAW_MQTT    2
 
 // Use font's yAdvance to prevent line overlap on smaller displays
 const static int lineHeight = (int)FONT_BODY.yAdvance + 2;
+
+static uint32_t col1NameX()
+{
+  uint32_t width = hpDisplayWidth();
+  return width < 800 ? 1 * (width / 32) : 1 * (width / 8);
+}
+
+static uint32_t col1DataX()
+{
+  uint32_t width = hpDisplayWidth();
+  return width < 800 ? 7 * (width / 32) : 2 * (width / 8);
+}
+
+static uint32_t col2NameX()
+{
+  uint32_t width = hpDisplayWidth();
+  return width < 800 ? 17 * (width / 32) : 5 * (width / 8);
+}
+
+static uint32_t col2DataX()
+{
+  uint32_t width = hpDisplayWidth();
+  return width < 800 ? 23 * (width / 32) : 6 * (width / 8);
+}
 
 // truncateToFit: returns s unchanged if it fits in max_width pixels at the
 // current font, otherwise returns a pointer to a static buffer containing
@@ -70,17 +80,19 @@ const char *wl_status_to_string(wl_status_t status)
 
 void displayBoundaryBox()
 {
-  int bw = max(scaleX(10), 2);
-  display.fillRect(0, 0, bw, E_INK_HEIGHT, HP_FG);                // left
-  display.fillRect(E_INK_WIDTH - bw, 0, bw, E_INK_HEIGHT, HP_FG); // right
-  display.fillRect(0, 0, E_INK_WIDTH, bw, HP_FG);                 // top
-  display.fillRect(0, E_INK_HEIGHT - bw, E_INK_WIDTH, bw, HP_FG); // bottom
+  int bw = max(hpScaleX(10), 2);
+  int16_t width = hpDisplayWidth();
+  int16_t height = hpDisplayHeight();
+  display.fillRect(0, 0, bw, height, HP_FG);                // left
+  display.fillRect(width - bw, 0, bw, height, HP_FG);       // right
+  display.fillRect(0, 0, width, bw, HP_FG);                 // top
+  display.fillRect(0, height - bw, width, bw, HP_FG);       // bottom
 }
 
 void cleanField(uint32_t x, uint32_t y)
 {
-  display.fillRect(x, y - lineHeight, (E_INK_WIDTH / 8), lineHeight, HP_BG);
-  //Serial.printf("fillRect(x:%u, y:%u, w:%u, h:%u)\n", x, y, (E_INK_WIDTH / 8), lineHeight);
+  display.fillRect(x, y - lineHeight, (hpDisplayWidth() / 8), lineHeight, HP_BG);
+  //Serial.printf("fillRect(x:%u, y:%u, w:%u, h:%u)\n", x, y, (hpDisplayWidth() / 8), lineHeight);
 }
 
 void drawNetwork(uint32_t *yref, bool clean)
@@ -88,45 +100,45 @@ void drawNetwork(uint32_t *yref, bool clean)
   uint32_t y = *yref;
 
   // network
-  display.setCursor(COL2_NAME_X, y);
+  display.setCursor(col2NameX(), y);
   display.print("Hostname:");
-  if (clean) { cleanField(COL2_DATA_X, y); };
-  display.setCursor(COL2_DATA_X, y);
+  if (clean) { cleanField(col2DataX(), y); };
+  display.setCursor(col2DataX(), y);
   display.print(WiFi.getHostname());
   // ip
   y += lineHeight;
-  display.setCursor(COL2_NAME_X, y);
+  display.setCursor(col2NameX(), y);
   display.print("IP Address:");
-  if (clean) { cleanField(COL2_DATA_X, y); };
-  display.setCursor(COL2_DATA_X, y);
+  if (clean) { cleanField(col2DataX(), y); };
+  display.setCursor(col2DataX(), y);
   display.print(WiFi.localIP().toString().c_str());
   // netmask
   y += lineHeight;
-  display.setCursor(COL2_NAME_X, y);
+  display.setCursor(col2NameX(), y);
   display.print("Subnet Mask:");
-  if (clean) { cleanField(COL2_DATA_X, y); };
-  display.setCursor(COL2_DATA_X, y);
+  if (clean) { cleanField(col2DataX(), y); };
+  display.setCursor(col2DataX(), y);
   display.print(WiFi.subnetMask().toString().c_str());
   // gateway
   y += lineHeight;
-  display.setCursor(COL2_NAME_X, y);
+  display.setCursor(col2NameX(), y);
   display.print("Gateway:");
-  if (clean) { cleanField(COL2_DATA_X, y); };
-  display.setCursor(COL2_DATA_X, y);
+  if (clean) { cleanField(col2DataX(), y); };
+  display.setCursor(col2DataX(), y);
   display.print(WiFi.gatewayIP().toString().c_str());
   // dns
   y += lineHeight;
-  display.setCursor(COL2_NAME_X, y);
+  display.setCursor(col2NameX(), y);
   display.print("DNS:");
-  if (clean) { cleanField(COL2_DATA_X, y); };
-  display.setCursor(COL2_DATA_X, y);
+  if (clean) { cleanField(col2DataX(), y); };
+  display.setCursor(col2DataX(), y);
   display.print(WiFi.dnsIP(0).toString().c_str());
   // mac
   y += lineHeight;
-  display.setCursor(COL2_NAME_X, y);
+  display.setCursor(col2NameX(), y);
   display.print("MAC Address:");
-  if (clean) { cleanField(COL2_DATA_X, y); };
-  display.setCursor(COL2_DATA_X, y);
+  if (clean) { cleanField(col2DataX(), y); };
+  display.setCursor(col2DataX(), y);
   display.print(WiFi.macAddress().c_str());
 
   *yref = y;
@@ -136,31 +148,31 @@ void drawWiFi(uint32_t *yref, bool clean)
 {
   uint32_t y = *yref;
 
-  display.setCursor(COL2_NAME_X, y);
+  display.setCursor(col2NameX(), y);
   display.print("SSID:");
-  if (clean) { cleanField(COL2_DATA_X, y); };
-  display.setCursor(COL2_DATA_X, y);
+  if (clean) { cleanField(col2DataX(), y); };
+  display.setCursor(col2DataX(), y);
   display.print(WiFi.SSID().c_str());
   // bssid
   y += lineHeight;
-  display.setCursor(COL2_NAME_X, y);
+  display.setCursor(col2NameX(), y);
   display.print("BSSID:");
-  if (clean) { cleanField(COL2_DATA_X, y); };
-  display.setCursor(COL2_DATA_X, y);
+  if (clean) { cleanField(col2DataX(), y); };
+  display.setCursor(col2DataX(), y);
   display.print(WiFi.BSSIDstr().c_str());
   // signal
   y += lineHeight;
-  display.setCursor(COL2_NAME_X, y);
+  display.setCursor(col2NameX(), y);
   display.print("Signal:");
-  if (clean) { cleanField(COL2_DATA_X, y); };
-  display.setCursor(COL2_DATA_X, y);
+  if (clean) { cleanField(col2DataX(), y); };
+  display.setCursor(col2DataX(), y);
   display.printf("%d dBm", WiFi.RSSI());
   // wifi status
   y += lineHeight;
-  display.setCursor(COL2_NAME_X, y);
+  display.setCursor(col2NameX(), y);
   display.print("WiFi Status:");
-  if (clean) { cleanField(COL2_DATA_X, y); };
-  display.setCursor(COL2_DATA_X, y);
+  if (clean) { cleanField(col2DataX(), y); };
+  display.setCursor(col2DataX(), y);
   display.print(wl_status_to_string(WiFi.status()));
 
   *yref = y;
@@ -170,17 +182,17 @@ void drawMQTT(uint32_t *yref, bool clean)
 {
   uint32_t y = *yref;
 
-  display.setCursor(COL2_NAME_X, y);
+  display.setCursor(col2NameX(), y);
   display.printf("MQTT Server:");
-  if (clean) { cleanField(COL2_DATA_X, y); };
-  display.setCursor(COL2_DATA_X, y);
+  if (clean) { cleanField(col2DataX(), y); };
+  display.setCursor(col2DataX(), y);
   display.print(plateCfg.mqttHost);
   // MQTT status
   y += lineHeight;
-  display.setCursor(COL2_NAME_X, y);
+  display.setCursor(col2NameX(), y);
   display.printf("MQTT Status:");
-  if (clean) { cleanField(COL2_DATA_X, y); };
-  display.setCursor(COL2_DATA_X, y);
+  if (clean) { cleanField(col2DataX(), y); };
+  display.setCursor(col2DataX(), y);
   display.printf(mqttConnected() ? "OK" : "Error");
 
   *yref = y;
@@ -204,123 +216,125 @@ void displayInfoScreen()
   // Title
   display.setFont(&FONT_HEADING);
   display.setTextSize(1);
-  uint32_t y = centerTextX("HomePlate Info", 0, E_INK_WIDTH, scaleY(100), false);
+  uint32_t displayWidth = hpDisplayWidth();
+  uint32_t displayHeight = hpDisplayHeight();
+  uint32_t y = centerTextX("HomePlate Info", 0, displayWidth, hpScaleY(100), false);
   display.setFont(&FONT_BODY);
   // version
   snprintf(buff, 1024, "Version: [%s]", VERSION);
-  y = centerTextX(buff, 0, E_INK_WIDTH, y + scaleY(110), false);
+  y = centerTextX(buff, 0, displayWidth, y + hpScaleY(110), false);
 
   // column 1
   // Model
-  y = scaleY(250);
-  display.setCursor(COL1_NAME_X, y);
+  y = hpScaleY(250);
+  display.setCursor(col1NameX(), y);
   display.print("Model:");
-  display.setCursor(COL1_DATA_X, y);
+  display.setCursor(col1DataX(), y);
   display.print(DEVICE_MODEL);
   // CPU
   y += lineHeight;
-  display.setCursor(COL1_NAME_X, y);
+  display.setCursor(col1NameX(), y);
   display.print("CPU:");
-  display.setCursor(COL1_DATA_X, y);
+  display.setCursor(col1DataX(), y);
   display.printf("%u core(s)", chip_info.cores);
   // frequency
   y += lineHeight;
-  display.setCursor(COL1_NAME_X, y);
+  display.setCursor(col1NameX(), y);
   display.print("Frequency:");
-  display.setCursor(COL1_DATA_X, y);
+  display.setCursor(col1DataX(), y);
   display.printf("%u Mhz", getCpuFrequencyMhz());
   // Features
   y += lineHeight;
-  display.setCursor(COL1_NAME_X, y);
+  display.setCursor(col1NameX(), y);
   display.print("Features:");
-  display.setCursor(COL1_DATA_X, y);
+  display.setCursor(col1DataX(), y);
   display.printf("%s%s%s", (chip_info.features & CHIP_FEATURE_WIFI_BGN) ? "WiFi" : "", (chip_info.features & CHIP_FEATURE_BT) ? "/BT" : "", (chip_info.features & CHIP_FEATURE_BLE) ? "/BLE" : "");
   // Flash
   y += lineHeight;
-  display.setCursor(COL1_NAME_X, y);
+  display.setCursor(col1NameX(), y);
   display.print("Flash:");
-  display.setCursor(COL1_DATA_X, y);
+  display.setCursor(col1DataX(), y);
   display.printf("%dMB %s", ESP.getFlashChipSize() / (1024 * 1024), (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
   // Heap
   y += lineHeight;
-  display.setCursor(COL1_NAME_X, y);
+  display.setCursor(col1NameX(), y);
   display.print("Min Heap Free:");
-  display.setCursor(COL1_DATA_X, y);
+  display.setCursor(col1DataX(), y);
   display.printf("%.2fMB", (esp_get_minimum_free_heap_size()) / (1024.0F * 1024.0F));
   // Tasks
   y += lineHeight;
-  display.setCursor(COL1_NAME_X, y);
+  display.setCursor(col1NameX(), y);
   display.print("Tasks:");
-  display.setCursor(COL1_DATA_X, y);
+  display.setCursor(col1DataX(), y);
   display.printf("%d", uxTaskGetNumberOfTasks());
   // Display
   y += lineHeight;
-  display.setCursor(COL1_NAME_X, y);
+  display.setCursor(col1NameX(), y);
   display.print("Display:");
-  display.setCursor(COL1_DATA_X, y);
-  display.printf("%dx%d", E_INK_WIDTH, E_INK_HEIGHT);
+  display.setCursor(col1DataX(), y);
+  display.printf("%dx%d", displayWidth, displayHeight);
   // Dither
   y += lineHeight;
-  display.setCursor(COL1_NAME_X, y);
+  display.setCursor(col1NameX(), y);
   display.print("Dither:");
-  display.setCursor(COL1_DATA_X, y);
+  display.setCursor(col1DataX(), y);
   display.print(ditherKernelName(plateCfg.ditherKernel));
 
   // bootCount
   y += lineHeight * 2;
-  display.setCursor(COL1_NAME_X, y);
+  display.setCursor(col1NameX(), y);
   display.print("Boot #:");
-  display.setCursor(COL1_DATA_X, y);
+  display.setCursor(col1DataX(), y);
   display.printf("%u", bootCount);
   // loopCount
   y += lineHeight;
-  display.setCursor(COL1_NAME_X, y);
+  display.setCursor(col1NameX(), y);
   display.print("Activity #:");
-  display.setCursor(COL1_DATA_X, y);
+  display.setCursor(col1DataX(), y);
   display.printf("%u", activityCount);
   // wake reason
   y += lineHeight;
-  display.setCursor(COL1_NAME_X, y);
+  display.setCursor(col1NameX(), y);
   display.print("Wake Reason:");
-  display.setCursor(COL1_DATA_X, y);
+  display.setCursor(col1DataX(), y);
   display.printf("%s", bootReason());
   // battery
   y += lineHeight;
   double voltage = display.readBattery();
   int percent = getBatteryPercent(voltage);
-  display.setCursor(COL1_NAME_X, y);
+  display.setCursor(col1NameX(), y);
   display.print("Battery:");
-  display.setCursor(COL1_DATA_X, y);
+  display.setCursor(col1DataX(), y);
   display.printf("%d%% (%.2fv)", percent, voltage);
 #ifdef INKPLATE_HAS_TEMPERATURE
   // temp
   y += lineHeight;
   int temp = display.readTemperature();
   int tempF = (temp * 9 / 5) + 32;
-  display.setCursor(COL1_NAME_X, y);
+  display.setCursor(col1NameX(), y);
   display.print("Temperature:");
-  display.setCursor(COL1_DATA_X, y);
+  display.setCursor(col1DataX(), y);
   display.printf("%dC (%dF)", temp, tempF);
 #endif
 
   if (strlen(plateCfg.trmnlId) > 0) {
   // TRMNL
   y += lineHeight * 2;
-  display.setCursor(COL1_NAME_X, y);
+  display.setCursor(col1NameX(), y);
   display.print("TRMNL ID:");
-  display.setCursor(COL1_DATA_X, y);
+  display.setCursor(col1DataX(), y);
   display.print(plateCfg.trmnlId);
   y += lineHeight;
-  display.setCursor(COL1_NAME_X, y);
+  display.setCursor(col1NameX(), y);
   display.print("TRMNL URL:");
-  display.setCursor(COL1_DATA_X, y);
+  display.setCursor(col1DataX(), y);
   // Truncate to stay within the left column — otherwise on small displays
   // the URL bleeds rightward into the right column's data.
-  display.print(truncateToFit(plateCfg.trmnlUrl, COL2_NAME_X - COL1_DATA_X - scaleX(20)));
+  display.print(truncateToFit(plateCfg.trmnlUrl, col2NameX() - col1DataX() - hpScaleX(20)));
   }
 
   // column 2
-  y = scaleY(250);
+  y = hpScaleY(250);
   // network
   uint32_t yNetwork = y;
   drawNetwork(&y, false);
@@ -344,34 +358,34 @@ void displayInfoScreen()
   if (strlen(plateCfg.ntpServer) > 0) {
   // time
   y += lineHeight * 2;
-  display.setCursor(COL2_NAME_X, y);
+  display.setCursor(col2NameX(), y);
   display.print("Time:");
-  display.setCursor(COL2_DATA_X, y);
+  display.setCursor(col2DataX(), y);
   display.print(shortDateTimeString());
   // Timezone
   y += lineHeight;
-  display.setCursor(COL2_NAME_X, y);
+  display.setCursor(col2NameX(), y);
   display.print("Timezone:");
-  display.setCursor(COL2_DATA_X, y);
+  display.setCursor(col2DataX(), y);
   display.print(plateCfg.timezone);
   // NTP
   y += lineHeight;
-  display.setCursor(COL2_NAME_X, y);
+  display.setCursor(col2NameX(), y);
   display.print("NTP Server:");
-  display.setCursor(COL2_DATA_X, y);
+  display.setCursor(col2DataX(), y);
   display.print(plateCfg.ntpServer);
   // NTP status
   y += lineHeight;
-  display.setCursor(COL2_NAME_X, y);
+  display.setCursor(col2NameX(), y);
   display.print("NTP Status:");
-  display.setCursor(COL2_DATA_X, y);
+  display.setCursor(col2DataX(), y);
   display.print(getNTPSynced() ? "OK" : "False");
 
   // RTC
   y += lineHeight;
-  display.setCursor(COL2_NAME_X, y);
+  display.setCursor(col2NameX(), y);
   display.printf("Ext RTC:");
-  display.setCursor(COL2_DATA_X, y);
+  display.setCursor(col2DataX(), y);
   display.printf(display.rtc.isSet() ? "OK" : "Error");
   }
 
